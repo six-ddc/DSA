@@ -28,7 +28,7 @@ typedef struct
 {
     dsa_list_node* head;
     dsa_list_node* tail;
-    unsigned long long length;
+    size_t length;
     void (*free)(void*);
 } dsa_list;
 
