@@ -16,6 +16,10 @@ void free_node(void* node_) {
     free((int*)node_);
 }
 
+int comp_node(void* a, void* b) {
+    return *(int*)a - *(int*)b;
+}
+
 void test_list() {
     // prototype
     dsa_list* lst = dsa_list_new();
@@ -23,7 +27,7 @@ void test_list() {
     for(int i = 0; i < 100; ++i) {
         int *a = malloc(sizeof(int)); *a = i;
         dsa_list_rpush(lst, dsa_list_node_new(a));
-        int *b = malloc(sizeof(int)); *b = i;
+        int *b = malloc(sizeof(int)); *b = 2 * i;
         dsa_list_lpush(lst, dsa_list_node_new(b));
     }
     dsa_list_node* mx = dsa_list_lpop(lst);
@@ -44,6 +48,20 @@ void test_list() {
     printf("\n");
     dsa_list_iterator_destory(it1);
     dsa_list_iterator_destory(it2);
+
+    dsa_list_set_comp_node(lst, comp_node);
+    int *a = malloc(sizeof(int)); *a = 21;
+    next = dsa_list_find(lst, a);
+    if(next) printf("find: %d\n", *a);
+
+    // macro
+    dsa_list_foreach(lst, DSA_LIST_TAIL, {
+            printf("%d^", *(int*)data);
+            if(*(int*)data == 180) {
+                break;
+            }
+        })
+    printf("\n");
 
     dsa_list_destory(lst);
 }

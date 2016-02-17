@@ -29,10 +29,9 @@ typedef struct
     dsa_list_node* head;
     dsa_list_node* tail;
     size_t length;
-    void (*free)(void*);
+    void (*free_node)(void*);
+    int (*comp_node)(void*, void*);
 } dsa_list;
-
-// iterator
 
 typedef enum
 {
@@ -45,6 +44,27 @@ typedef struct
     dsa_list_node* next;
     dsa_list_direction direction;
 } dsa_list_iterator;
+
+// macros
+
+#define dsa_list_foreach(lst, direction, block) {                       \
+        dsa_list_node* node = direction == DSA_LIST_HEAD ? lst->head : lst->tail;   \
+        while(node) {                                                   \
+            void* data = node->data;                                    \
+            block                                                       \
+            node = direction == DSA_LIST_HEAD ? node->next : node->prev;\
+        }                                                               \
+    }
+
+#define dsa_list_foreach2(lst, direction, block) {                      \
+        dsa_list_iterator* it = dsa_list_iterator_new(lst, direction);  \
+        dsa_list_node* node = NULL;                                     \
+        while((node = dsa_list_iterator_next(it))) {                    \
+            void* data = node->data;                                    \
+            block                                                       \
+        }                                                               \
+        dsa_list_iterator_destory(it);                                  \
+    }
 
 // prototypes
 dsa_list_node* dsa_list_node_new(void* v_) {
@@ -63,6 +83,8 @@ dsa_list* dsa_list_new() {
         l->head = NULL;
         l->tail = NULL;
         l->length = 0;
+        l->free_node = NULL;
+        l->comp_node = NULL;
     }
     return l;
 }
@@ -71,7 +93,7 @@ void dsa_list_destory(dsa_list* l_) {
     dsa_list_node *next, *curr = l_->head;
     while(curr) {
         next = curr->next;
-        if(l_->free) l_->free(curr->data);
+        if(l_->free_node) l_->free_node(curr->data);
         DSA_FREE(curr);
         curr = next;
     }
@@ -79,7 +101,11 @@ void dsa_list_destory(dsa_list* l_) {
 }
 
 void dsa_list_set_free_node(dsa_list* l_, void (*free_)(void* node_)) {
-    if(l_) l_->free = free_;
+    if(l_) l_->free_node = free_;
+}
+
+void dsa_list_set_comp_node(dsa_list* l_, int (*comp_)(void*, void*)) {
+    if(l_) l_->comp_node = comp_;
 }
 
 dsa_list_node* dsa_list_rpush(dsa_list* l_, dsa_list_node* n_) {
@@ -136,6 +162,22 @@ dsa_list_node* dsa_list_lpop(dsa_list* l_) {
     return ret;
 }
 
+dsa_list_node* dsa_list_find(dsa_list* l_, void* v_) {
+    dsa_list_foreach(l_, DSA_LIST_HEAD, {
+        if(l_->comp_node) {
+            if(l_->comp_node(data, v_) == 0) {
+                return data;
+            }
+        } else {
+            if(data == v_) {
+                return data;
+            }
+        }
+    })
+    return NULL;
+}
+
+// iterator
 dsa_list_iterator* dsa_list_iterator_new_from_node(dsa_list_node* n_, dsa_list_direction d_) {
     dsa_list_iterator* i = DSA_MALLOC(sizeof(dsa_list_iterator));
     if(i) {
