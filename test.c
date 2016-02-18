@@ -1,6 +1,7 @@
-#include "dsa/dsa_list.h"
-
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
 
 static size_t malloc_size = 0;
 
@@ -9,7 +10,15 @@ void* new_malloc(size_t size) {
     return malloc(size);
 }
 
-#define DAS_MALLOC new_malloc
+void *new_calloc(size_t n, size_t size) {
+    malloc_size += (n * size);
+    return calloc(n, size);
+}
+
+#define DSA_MALLOC new_malloc
+#define DSA_CALLOC new_calloc
+
+#include "dsa/dsa.h"
 
 void free_node(void* node_) {
     printf("%d ", *(int*)node_);
@@ -50,7 +59,7 @@ void test_list() {
     dsa_list_iterator_destory(it2);
 
     dsa_list_set_comp_node(lst, comp_node);
-    int *a = malloc(sizeof(int)); *a = 21;
+    int *a = malloc(sizeof(int)); *a = 20;
     next = dsa_list_find(lst, a);
     if(next) printf("find: %d\n", *a);
 
@@ -66,8 +75,38 @@ void test_list() {
     dsa_list_destory(lst);
 }
 
+void test_xxhash()
+{
+    srand(time(NULL));
+    for(int i = 0; i < 100; ++i) {
+        char a[100] = {0};
+        for(int j = 0; j < sizeof(a) - 1; ++j) {
+            a[j] = rand() % 26 + 'a';  
+        }
+        printf("%s - %u\n", a, XXH32(a, sizeof(a), 0));
+    }
+}
+
+void test_hashmap()
+{
+    size_t begin_size = malloc_size;
+    dsa_hashmap* hm = dsa_hashmap_new();
+    for(int i = 0; i < 100000; ++i) {
+        char a[100] = {0};
+        char b[100] = {0};
+        for(int j = 0; j < sizeof(a) - 1; ++j) {
+            a[j] = rand() % 26 + 'a';  
+            b[j] = rand() % 26 + 'a';  
+        }
+        if(dsa_hashmap_put(hm, a, b) != DSA_HASHMAP_OK || dsa_hashmap_put(hm, b, a) != DSA_HASHMAP_OK) {
+            printf("fail,  hashmap size:%u, buckets:%u\n", hm->size, hm->buckets);
+        }
+    }
+    printf("alloc size: %lu, hashmap buckets: %u, n_rehash: %u, n_nothit: %u\n", malloc_size - begin_size, hm->buckets, hm->n_rehash, hm->n_nothit);
+}
+
 int main()
 {
-    test_list();
+    test_hashmap();
     return 0;
 }

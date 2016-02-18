@@ -1,5 +1,5 @@
 all:
-	gcc -g -o bin_test test.c 
+	gcc -g -o bin_test test.c  dsa/xxhash.c
 run: all
 	./bin_test
 clean:

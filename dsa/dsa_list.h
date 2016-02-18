@@ -1,19 +1,7 @@
 #ifndef _DSA_LIST_H_
 #define _DSA_LIST_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdlib.h>
-
-#ifndef DSA_MALLOC
-#define DSA_MALLOC malloc
-#endif
-
-#ifndef DSA_FREE
-#define DSA_FREE free
-#endif
 
 // node, list
 
@@ -45,6 +33,26 @@ typedef struct
     dsa_list_direction direction;
 } dsa_list_iterator;
 
+// interfaces
+
+dsa_list_node* dsa_list_node_new(void* v_);
+dsa_list* dsa_list_new();
+void dsa_list_set_free_node(dsa_list* l_, void (*free_)(void* node_));
+void dsa_list_set_comp_node(dsa_list* l_, int (*comp_)(void*, void*));
+
+dsa_list_node* dsa_list_rpush(dsa_list* l_, dsa_list_node* n_);
+dsa_list_node* dsa_list_rpop(dsa_list* l_);
+dsa_list_node* dsa_list_lpush(dsa_list* l_, dsa_list_node* n_);
+dsa_list_node* dsa_list_lpop(dsa_list* l_);
+dsa_list_node* dsa_list_find(dsa_list* l_, void* v_);
+
+dsa_list_iterator* dsa_list_iterator_new_from_node(dsa_list_node* n_, dsa_list_direction d_);
+dsa_list_iterator* dsa_list_iterator_new(dsa_list* l_, dsa_list_direction d_);
+dsa_list_node* dsa_list_iterator_next(dsa_list_iterator* i_);
+void dsa_list_iterator_destory(dsa_list_iterator* i_);
+
+void dsa_list_destory(dsa_list* l_);
+
 // macros
 
 #define dsa_list_foreach(lst, direction, block) {                       \
@@ -67,6 +75,7 @@ typedef struct
     }
 
 // prototypes
+
 dsa_list_node* dsa_list_node_new(void* v_) {
     dsa_list_node* n = DSA_MALLOC(sizeof(dsa_list_node));
     if(n) {
@@ -124,8 +133,9 @@ dsa_list_node* dsa_list_rpush(dsa_list* l_, dsa_list_node* n_) {
 }
 
 dsa_list_node* dsa_list_rpop(dsa_list* l_) {
+    dsa_list_node* ret;
     if(!l_ || !l_->length) return NULL;
-    dsa_list_node* ret = l_->tail;
+    ret = l_->tail;
     if(--l_->length) {
         l_->tail = ret->prev;
         l_->tail->next = NULL;
@@ -151,8 +161,9 @@ dsa_list_node* dsa_list_lpush(dsa_list* l_, dsa_list_node* n_) {
 }
 
 dsa_list_node* dsa_list_lpop(dsa_list* l_) {
+    dsa_list_node* ret;
     if(!l_ || !l_->length) return NULL;
-    dsa_list_node* ret = l_->head;
+    ret = l_->head;
     if(--l_->length) {
         l_->head = ret->next;
         l_->head->prev = NULL;
@@ -203,9 +214,5 @@ dsa_list_node* dsa_list_iterator_next(dsa_list_iterator* i_) {
 void dsa_list_iterator_destory(dsa_list_iterator* i_) {
     DSA_FREE(i_);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  /* _DSA_LIST_H_ */
